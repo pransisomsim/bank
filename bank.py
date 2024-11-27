@@ -33,15 +33,7 @@ class BankAccount():
         self.home()
 
     def home(self):
-        """self.showBalance()
-        self.deposit(300)
-        self.withdraw(500)
-        self.showBalance()
-        self.saveData()"""
-        self.loadData('7863')
-        self.showBalance()
-        for i in BankAccount.__registeredAccount:
-            print(i)
+        BankAccount.create_account(123, 4567)
 
     def withdraw(self, data):
         try:
@@ -73,8 +65,10 @@ class BankAccount():
 
     def saveData(self):
         path = f"users/{self.__acount.get_account_number()}"
-        os.makedirs(path)
         filename = f'{path}/data.json'
+
+        if not os.path.exists(path):
+            os.makedirs(path)
 
         data = {
             'account_number' : self.__acount.get_account_number(),
@@ -104,8 +98,26 @@ class BankAccount():
                         data['password'],
                         data['balance']
                     )
-    def check_balance(self):
-        pass
+    @staticmethod
+    def create_account(id, password):
+        path = f'users/{id}'
+        filename = f'{path}/data.json'
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        data = {
+            'account_number' : id,
+            'password' : password,
+            'balance' : 0,
+        }
+        try:
+            with open(filename, 'w') as file:
+                json.dump(data, file, indent=4)
+
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(e)
+
 
 if __name__ == "__main__":
     BankAccount()
