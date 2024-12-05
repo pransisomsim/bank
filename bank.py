@@ -1,12 +1,16 @@
-import random, json, os
-#from window_generator import WindowGenerator
-#from tkinter import messagebox
+import random
+import json
+import os
 
-class Account():
-    def __init__(self,account_number, password, balance) -> None:
+class Account:
+    def __init__(self, name, account_number, password, balance):
+        self.__name = name
         self.__account_number = account_number
         self.__password = password
         self.__balance = balance
+
+    def get_name(self):
+        return self.__name
 
     def get_account_number(self):
         return self.__account_number
@@ -20,104 +24,177 @@ class Account():
     def set_balance(self, amount):
         self.__balance = amount
 
-class BankAccount():
-    __registeredAccount = []
 
-    def __init__(self) -> None:
-        #self.__generator = WindowGenerator()
-        self.__acount = Account(
-            random.randint(1111, 9999),
-            random.randint(1111, 9999),
-            random.randint(1111, 9999),
-        )
+class BankAccount:
+    def __init__(self):
+        self.__acount = None
+
+    def set_account(self, account):
+        self.__acount = account
+
+    def withdraw(self, amount):
+        if self.__acount is None:
+            print("No account is logged in.")
+            return
+
+        if amount > self.__acount.get_balance():
+            print(f"Insufficient balance to withdraw ₱{amount}.")
+        elif amount <= 0:
+            print("Invalid amount to withdraw.")
+        else:
+            print(f"Withdrawn: ₱{amount}")
+            self.__acount.set_balance(self.__acount.get_balance() - amount)
+
+    def deposit(self, amount):
+        if self.__acount is None:
+            print("No account is logged in.")
+            return
+
+        if amount <= 0:
+            print("Invalid amount to deposit.")
+        else:
+            print(f"Deposited: ₱{amount}")
+            self.__acount.set_balance(self.__acount.get_balance() + amount)
+
+    def show_balance(self):
+        if self.__acount is None:
+            print("No account is logged in.")
+        else:
+            print(f"Balance: ₱{self.__acount.get_balance()}")
+
+
+class BankInterface:
+    def __init__(self):
+        self.__bank = BankAccount()
         self.home()
 
     def home(self):
-        BankAccount.create_account(123, 4567)
+        while True:
+            print('-' * 70)
+            print("[1]. Create Account\n[2]. Login\n[3]. Exit\n")
+            choice = input("Enter your choice: ")
 
-    def withdraw(self, data):
-        try:
-            if data > self.__acount.get_balance():
-                print(f"Insufficient balance to withdrawn ₱{data}.")
+            if choice == '1':
+                name = input("Enter your name: ")
+                password = input("Enter your password: ")
+                self.create_account(name, password)
 
-            elif data <=0:
-                print("Invalid amount to withdrawn.")
+            elif choice == '2':
+                account_number = input("Enter your account number: ")
+                password = input("Enter your password: ")
+                self.login(account_number, password)
+
+            elif choice == '3':
+                print("Thank you! Bye.")
+                break
 
             else:
-                print(f"withdrawn: ₱{data}")
-                data = self.__acount.get_balance() - data
-                self.__acount.set_balance(data)
+                print("Invalid choice. Please try again.")
 
-        except ValueError:
-            print("Enter integer inputs")
-
-    def deposit(self, data):
-        if data <=0:
-            print("Invalid amount to deposit.")
-
-        else:
-            print(f"deposited: ₱{data}")
-            data = self.__acount.get_balance() + data
-            self.__acount.set_balance(data)
-
-    def showBalance(self):
-        print(f"Balance: ₱{self.__acount.get_balance()}")
-
-    def saveData(self):
-        path = f"users/{self.__acount.get_account_number()}"
+    def create_account(self, name, password):
+        account_number = str(random.randint(1111, 9999))
+        path = f'users/{account_number}'
         filename = f'{path}/data.json'
 
         if not os.path.exists(path):
             os.makedirs(path)
 
         data = {
-            'account_number' : self.__acount.get_account_number(),
-            'password' : self.__acount.get_password(),
-            'balance' : self.__acount.get_balance()
+            'name': name,
+            'account_number': account_number,
+            'password': password,
+            'balance': 0
         }
+
         try:
             with open(filename, 'w') as file:
                 json.dump(data, file, indent=4)
+                print(f"Account `{account_number}` successfully created.")
 
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(e)
+            print(f"Error saving account data: {e}")
 
-    def loadData(self, user: str, filename='users'):
-        if os.path.exists(filename):
-            for folder in os.listdir(filename):
-                BankAccount.__registeredAccount.append(folder)
-                path = os.path.join(filename, folder)
+    def save_data(self):
+        if self.__bank._BankAccount__acount is None:
+            print("No account is logged in.")
+            return
 
-                if folder == user:
-                    file = os.path.join(path, 'data.json')
-                    with open(file, 'r') as f:
-                        data = json.load(f)
+        account = self.__bank._BankAccount__acount
+        path = f'users/{account.get_account_number()}'
+        filename = f'{path}/data.json'
 
-                    self.__acount = Account(
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        data = {
+            'name': account.get_name(),
+            'account_number': account.get_account_number(),
+            'password': account.get_password(),
+            'balance': account.get_balance()
+        }
+
+        try:
+            with open(filename, 'w') as file:
+                json.dump(data, file, indent=4)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Error saving account data: {e}")
+
+    def login(self, account_number, password):
+        filename = 'users'
+
+        if not os.path.exists(filename):
+            print("No accounts found.")
+            return
+
+        for folder in os.listdir(filename):
+            path = os.path.join(filename, folder)
+            file = os.path.join(path, 'data.json')
+
+            try:
+                with open(file, 'r') as f:
+                    data = json.load(f)
+
+                if account_number == str(data['account_number']) and password == data['password']:
+                    self.__bank.set_account(Account(
+                        data['name'],
                         data['account_number'],
                         data['password'],
                         data['balance']
-                    )
-    @staticmethod
-    def create_account(id, password):
-        path = f'users/{id}'
-        filename = f'{path}/data.json'
+                    ))
+                    print(f"Welcome, {data['name']}! Login successful.")
+                    self.account_menu()
+                    return
+            except (FileNotFoundError, json.JSONDecodeError):
+                continue
 
-        if not os.path.exists(path):
-            os.makedirs(path)
+        print("Account not found or incorrect credentials.")
 
-        data = {
-            'account_number' : id,
-            'password' : password,
-            'balance' : 0,
-        }
-        try:
-            with open(filename, 'w') as file:
-                json.dump(data, file, indent=4)
+    def account_menu(self):
+        while True:
+            print("\n[1]. Withdraw\n[2]. Deposit\n[3]. Show Balance\n[4]. Logout\n")
+            choice = input("Enter your choice: ")
 
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(e)
+            if choice == '1':
+                amount = int(input("Enter amount to withdraw: "))
+                self.__bank.withdraw(amount)
+                self.save_data()
+
+            elif choice == '2':
+                amount = int(input("Enter amount to deposit: "))
+                self.__bank.deposit(amount)
+                self.save_data()
+
+            elif choice == '3':
+                self.__bank.show_balance()
+
+            elif choice == '4':
+                print("Logged out successfully.")
+                break
+
+            else:
+                print("Invalid choice. Please try again.")
 
 
 if __name__ == "__main__":
-    BankAccount()
+    BankInterface()
+
